@@ -1,0 +1,172 @@
+import React, { useState } from 'react';
+import { signup } from '../api/auth.api';
+import { Link, useNavigate } from 'react-router-dom';
+import backgroundImage from '/signupBackground.jpg';
+
+const Signup = () => {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      return setError("Passwords do not match");
+    }
+    setLoading(true);
+    setError(null);
+
+    try {
+      await signup(formData);
+      navigate('/verify-otp', { state: { email: formData.email } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  return (
+
+    <div className='w-full min-h-screen flex flex-col md:flex-row' style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+
+      <div className='w-full md:w-1/2 relative overflow-hidden flex justify-center items-center p-8 flex-col text-center'>
+        <h1 className='text-5xl font-bold text-white '>Welcome to the RepoLensAI 👋</h1>
+        <div className='mt-6 text-center'>
+          <p className='text-lg text-gray-300'>
+            Already a member? <Link className='underline text-indigo-400 font-medium hover:border hover:border-indigo-400 hover:bg-indigo-700 hover:text-white hover:transition-all hover:rounded-lg hover:px-2 hover:py-1' to="/login">Log in</Link>
+          </p>
+        </div>
+      </div>
+
+      <div className='w-full md:w-1/2 relative flex flex-col justify-center py-12 px-6 lg:px-8 overflow-hidden'>
+
+        {/* Header - Added 'relative z-20' */}
+        <div className='relative z-20 sm:mx-auto sm:w-full sm:max-w-md'>
+          <h2 className='text-center text-3xl font-extrabold text-white tracking-tight'>
+            Create your account
+          </h2>
+          <p className='mt-2 text-center text-sm text-gray-300'>
+            Join thousands of teams managing workflow better.
+          </p>
+        </div>
+
+        {/* Form Container - Added 'relative z-20' */}
+        <div className='relative z-20 mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
+          <div className='py-8 px-10 rounded-2xl border  bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 border-gray-100'>
+            <form onSubmit={handleSubmit} className='space-y-5'>
+
+              {/* Name Row */}
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-1'>First Name</label>
+                  <input
+                    name='firstName'
+                    type='text'
+                    /* Added 'bg-white/10' and 'placeholder:text-gray-300' for better UI */
+                    className='block w-full px-3 py-2.5 bg-white/10 border border-gray-300 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400'
+                    placeholder='Jane'
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-1'>Last Name</label>
+                  <input
+                    name='lastName'
+                    type='text'
+                    className='block w-full px-3 py-2.5 bg-white/10 border border-gray-300 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400'
+                    placeholder='Doe'
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-1'>Work Email</label>
+                <input
+                  name='email'
+                  type='email'
+                  className='block w-full px-3 py-2.5 bg-white/10 border border-gray-300 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400'
+                  placeholder='jane@company.com'
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-1'>Password</label>
+                <input
+                  name='password'
+                  type='password'
+                  className='block w-full px-3 py-2.5 bg-white/10 border border-gray-300 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400'
+                  placeholder='••••••••'
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-1'>Confirm Password</label>
+                <input
+                  name='confirmPassword'
+                  type='password'
+                  className='block w-full px-3 py-2.5 bg-white/10 border border-gray-300 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400'
+                  placeholder='••••••••'
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-500/20 text-red-200 p-3 rounded-lg text-sm border border-red-500/50">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type='submit'
+                disabled={loading}
+                className='cursor-pointer w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-50'
+              >
+                {loading ? 'Creating account...' : 'Get Started'}
+              </button>
+            </form>
+
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  );
+}
+
+export default Signup;

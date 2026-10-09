@@ -1,0 +1,60 @@
+const fs = require('fs');
+const path = require('path');
+
+const ALLOWED_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx']);
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  'dist',
+  'build',
+  'coverage',
+  '.next',
+  'out',
+  '.cache',
+  'tmp'
+]);
+
+const MAX_FILE_SIZE = 50 * 1024; // 50 KB
+const MAX_FILES = 25;
+
+//recursive directory walk
+function walk(dir, baseDir, results) {
+    const entries = fs.readdirSync(dir, {withFileTypes: true});
+
+    for(const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const relativePath = path.relative(baseDir, fullPath);
+        if(!relativePath || relativePath === '.') return;
+
+        if(entry.isDirectory()) {
+            if(IGNORED_DIRS.has(entry.name)) continue;
+            walk(fullPath, baseDir, results);
+        } else {
+            const stats = fs.statSync(fullPath);
+            if(!stats.isFile()) continue; 
+            
+            const ext = path.extname(entry.name);
+            if(!ALLOWED_EXTENSIONS.has(ext)) continue;
+
+            if(stats.size > MAX_FILE_SIZE) continue;
+
+            results.push({
+                path: relativePath, 
+                absolutePath: fullPath,
+                size: stats.size,
+                extension: ext
+            });
+        }
+    }
+}
+
+function selectFiles({ baseDir }) {
+    const collected = [];
+
+    walk(baseDir, baseDir, collected);
+
+    //sort by size DESC (bigger files are usually important)
+    collected.sort((a, b) => b.size - a.size);
+
+    return collected.slice(0, MAX_FILES);
+}
+module.exports = {selectFiles};
