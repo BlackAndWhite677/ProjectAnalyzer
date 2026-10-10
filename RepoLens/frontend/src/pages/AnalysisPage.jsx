@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import JobFitPanel from '../components/JobFitPanel';
 
 // ─── Helper Components ──────────────────────────────────────────────────────
 
@@ -65,7 +66,7 @@ function LangBar({ languageStats }) {
   );
 }
 
-const TABS = ['Overview', 'Tech Stack', 'Structure', 'Modules', 'How It Works', 'Suggestions'];
+const TABS = ['Overview', 'Tech Stack', 'Structure', 'Modules', 'How It Works', 'Suggestions', 'Job Fit'];
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ export default function AnalysisPage() {
     summary, technologies, structure,
     modules, workflow, suggestions, languageStats
   } = result;
+  const analysisId = result.analysisId || result._id;
 
   const techCategories = [
     { label: 'Frontend', key: 'frontend', color: 'blue' },
@@ -249,6 +251,9 @@ export default function AnalysisPage() {
               <p className="text-text-muted">No suggestions available.</p>
             )}
           </Card>
+        )}
+        {activeTab === 'Job Fit' && (
+          <JobFitPanel analysisId={analysisId} />
         )}
       </div>
 

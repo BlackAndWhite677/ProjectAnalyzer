@@ -8,6 +8,7 @@ if (!fetch) {
     }
 }
 const { buildPrompt, buildAnalysisPrompt } = require('./promptBuilder.service');
+const { buildJobFitPrompt } = require('./jobFitPromptBuilder.service');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_URL = process.env.OPENAI_URL;
@@ -64,7 +65,7 @@ function extractJSON(text) {
     throw new Error('Failed to parse extracted JSON');
 }
 
-async function callLLM(system, user) {
+async function callLLM(system, user, { sensitive = false } = {}) {
     validateConfig();
 
     if (!fetch) {
@@ -91,11 +92,19 @@ async function callLLM(system, user) {
             body: JSON.stringify(payload)
         });
     } catch (err) {
+        if (sensitive) {
+            console.error('[LLM] sensitive request failed');
+            throw new Error('LLM request failed');
+        }
         console.error('[LLM] fetch failed:', err);
         throw new Error(`LLM fetch failed: ${err.message}`);
     }
 
     if (!response.ok) {
+        if (sensitive) {
+            console.error(`[LLM] sensitive API error: ${response.status} ${response.statusText}`);
+            throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
+        }
         const text = await response.text().catch(() => '<failed-to-read-body>');
         console.error('[LLM] API error response:', response.status, response.statusText, text);
         throw new Error(`LLM API error: ${response.status} ${response.statusText} - ${text}`);
@@ -105,6 +114,10 @@ async function callLLM(system, user) {
     try {
         data = await response.json();
     } catch (err) {
+        if (sensitive) {
+            console.error('[LLM] sensitive response was not valid JSON');
+            throw new Error('LLM returned invalid JSON');
+        }
         const text = await response.text().catch(() => '<failed-to-read-body>');
         console.error('[LLM] invalid JSON response body:', text);
         throw new Error('LLM returned invalid JSON');
@@ -129,4 +142,14 @@ async function analyzeProjectWithLLM(context) {
     return callLLM(system, user);
 }
 
-module.exports = { reviewChunkWithLLM, analyzeProjectWithLLM, validateConfig };
+async function analyzeJobFitWithLLM(projectProfile, jobDescription) {
+    const { system, user } = buildJobFitPrompt(projectProfile, jobDescription);
+    return callLLM(system, user, { sensitive: true });
+}
+
+module.exports = {
+    reviewChunkWithLLM,
+    analyzeProjectWithLLM,
+    analyzeJobFitWithLLM,
+    validateConfig
+};

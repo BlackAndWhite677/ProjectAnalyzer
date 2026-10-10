@@ -1,9 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const jobFitRoutes = require("./routes/jobFit.routes");
 const analyzeRoutes = require("./routes/analyze.routes");
-
-require("dotenv").config();
 app.use(express.json());
 
 const PORT = process.env.PORT || 4000;
@@ -20,6 +21,7 @@ app.use(
 );
 
 // Routes
+app.use("/api", jobFitRoutes);
 app.use("/api", analyzeRoutes);
 
 app.get("/", (req, res) => {
